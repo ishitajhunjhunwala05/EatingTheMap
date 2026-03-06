@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Favorite Food Spots</title>
+  <meta name="description" content="Share your favorite restaurants on the map" />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.9.4/mapbox-gl.css" rel="stylesheet" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.9.4/mapbox-gl.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Nunito', Arial, Helvetica, sans-serif;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      background: #faf5ff;
+      color: #581c87;
+    }
+
+    /* Navbar */
+    nav {
+      z-index: 10;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 2px solid #e9d5ff;
+      background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+      padding: 8px 16px;
+      font-size: 13px;
+      box-shadow: 0 2px 8px rgba(147, 51, 234, 0.1);
+    }
+
+    nav .brand {
+      margin-right: 8px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: #9333ea;
+    }
+
+    nav .divider {
+      width: 1px;
+      height: 20px;
+      background: #d8b4fe;
+    }
+
+    nav .coords {
+      font-family: 'Nunito', monospace;
+      font-size: 11px;
+      color: #a855f7;
+    }
+
+    nav input[type="text"] {
+      width: 80px;
+      border-radius: 8px;
+      border: 1px solid #e9d5ff;
+      background: #fff;
+      padding: 4px 8px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 11px;
+      outline: none;
+    }
+    nav input[type="text"].zoom-input { width: 56px; }
+    nav input[type="text"]:focus { box-shadow: 0 0 0 2px #c084fc; border-color: #a855f7; }
+
+    nav button {
+      border: none;
+      cursor: pointer;
+      font-size: 11px;
+      border-radius: 8px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 600;
+    }
+
+    nav .btn-go {
+      background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
+      color: #fff;
+      padding: 5px 12px;
+      font-weight: 600;
+    }
+    nav .btn-go:hover { background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%); }
+
+    nav .btn-loc {
+      background: #fff;
+      border: 1px solid #d8b4fe;
+      color: #9333ea;
+      padding: 5px 10px;
+    }
+    nav .btn-loc:hover { background: #f3e8ff; }
+
+    nav select {
+      border-radius: 8px;
+      border: 1px solid #e9d5ff;
+      background: #fff;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-family: 'Nunito', sans-serif;
+      outline: none;
+      color: #7c3aed;
+    }
+    nav select:focus { box-shadow: 0 0 0 2px #c084fc; border-color: #a855f7; }
+
+    nav .color-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 2px solid #d8b4fe;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+    nav .color-dot:hover { transform: scale(1.1); }
+    nav .color-dot.active { border-color: #9333ea; transform: scale(1.25); }
+
+    nav .pin-count {
+      margin-left: auto;
+      font-family: 'Nunito', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      color: #a855f7;
+      background: #f3e8ff;
+      padding: 3px 10px;
+      border-radius: 12px;
+    }
+
+    nav .color-label {
+      font-size: 11px;
+      color: #9333ea;
+    }
+
+    nav .goto-group { display: flex; align-items: center; gap: 6px; }
+    nav .colors-group { display: flex; align-items: center; gap: 6px; }
+
+    /* Map */
+    #map { flex: 1; width: 100%; }
+
+    /* User location pulse */
+    .user-marker {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .user-marker .pulse {
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #c084fc;
+      opacity: 0.4;
+      animation: ping 1.5s cubic-bezier(0,0,0.2,1) infinite;
+    }
+    .user-marker .dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #9333ea;
+      border: 2px solid #fff;
+      box-shadow: 0 2px 6px rgba(147, 51, 234, 0.4);
+    }
+    @keyframes ping {
+      75%, 100% { transform: scale(2); opacity: 0; }
+    }
+
+    /* Pin markers */
+    .pin-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 2px solid #fff;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+      cursor: pointer;
+    }
+
+    /* Popup overrides */
+    .mapboxgl-popup-content {
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 13px;
+      font-family: 'Nunito', sans-serif;
+      box-shadow: 0 4px 20px rgba(147, 51, 234, 0.2);
+      border: 1px solid #e9d5ff;
+    }
+
+    .popup-form { display: flex; flex-direction: column; gap: 8px; }
+    .popup-form input[type="text"],
+    .popup-form textarea {
+      width: 220px;
+      resize: none;
+      border-radius: 8px;
+      border: 1px solid #e9d5ff;
+      padding: 8px;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+    }
+    .popup-form input[type="text"]:focus,
+    .popup-form textarea:focus { box-shadow: 0 0 0 2px #c084fc; border-color: #a855f7; }
+
+    .popup-form input[type="text"] {
+      margin-bottom: 4px;
+    }
+
+    .pin-name {
+      font-weight: 700;
+      color: #7c3aed;
+      margin-bottom: 4px;
+    }
+
+    .popup-colors { display: flex; align-items: center; gap: 4px; }
+    .popup-colors .color-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid #e9d5ff;
+      cursor: pointer;
+    }
+    .popup-colors .color-dot.active { border-color: #9333ea; }
+
+    .popup-actions { display: flex; justify-content: flex-end; gap: 6px; }
+    .popup-actions button {
+      border: none;
+      border-radius: 8px;
+      padding: 5px 10px;
+      font-size: 11px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .popup-actions .btn-cancel { background: transparent; color: #a855f7; }
+    .popup-actions .btn-cancel:hover { background: #f3e8ff; }
+    .popup-actions .btn-save { background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%); color: #fff; }
+    .popup-actions .btn-save:hover { background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%); }
+    .popup-actions .btn-delete { background: transparent; color: #ec4899; }
+    .popup-actions .btn-delete:hover { background: #fdf2f8; }
+
+    .pin-note {
+      max-width: 192px;
+      white-space: pre-wrap;
+      color: #6b21a8;
+      font-size: 13px;
+    }
+    .pin-note-empty {
+      font-style: italic;
+      color: #c084fc;
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <span class="brand">FOOD SPOTS</span>
+  <span class="divider"></span>
+  <span class="coords" id="coords">0.0000, 0.0000 z12.0</span>
+  <span class="divider"></span>
+
+  <div class="goto-group">
+    <input type="text" id="goto-lng" placeholder="lng" />
+    <input type="text" id="goto-lat" placeholder="lat" />
+    <input type="text" id="goto-zoom" class="zoom-input" placeholder="zoom" value="12" />
+    <button class="btn-go" onclick="handleGoto()">Go</button>
+  </div>
+
+  <button class="btn-loc" onclick="handleMyLocation()">My Location</button>
+  <span class="divider"></span>
+
+  <select id="style-picker" onchange="handleStyleChange()">
+    <option value="mapbox://styles/mapbox/streets-v12">Streets</option>
+    <option value="mapbox://styles/mapbox/satellite-streets-v12">Satellite</option>
+    <option value="mapbox://styles/mapbox/dark-v11">Dark</option>
+    <option value="mapbox://styles/mapbox/light-v11">Light</option>
+    <option value="mapbox://styles/mapbox/outdoors-v12">Outdoors</option>
+  </select>
+
+  <span class="pin-count" id="pin-count">0 spots</span>
+</nav>
+
+<div id="map"></div>
+
+<script>
+  // MAPBOX_TOKEN, SUPABASE_URL, SUPABASE_ANON_KEY loaded from config.js
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let spots = [];
+  let spotMarkers = {};
+  let activePopup = null;
+  let userMarker = null;
+
+  // --- Supabase operations ---
+  async function loadSpots() {
+    const { data, error } = await db
+      .from('FoodSpots')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error loading spots:', error);
+      return [];
+    }
+    return data || [];
+  }
+
+  async function saveSpot(name, description, lat, lng) {
+    const { data, error } = await db
+      .from('FoodSpots')
+      .insert([{ Name: name, Description: description, Lat: lat, Lng: lng }])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error saving spot:', error);
+      return null;
+    }
+    return data;
+  }
+
+  async function removeSpot(id) {
+    const { error } = await db
+      .from('FoodSpots')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting spot:', error);
+      return false;
+    }
+    return true;
+  }
+
+  // --- Init map ---
+  mapboxgl.accessToken = MAPBOX_TOKEN;
+  // Default to central London if geolocation fails
+  const DEFAULT_CENTER = [-0.1276, 51.5074];
+  const map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/streets-v12',
+    center: DEFAULT_CENTER,
+    zoom: 13,
+  });
+
+  // --- Viewport coords display ---
+  function updateCoords() {
+    const { lng, lat } = map.getCenter();
+    const z = map.getZoom();
+    document.getElementById('coords').textContent =
+      `${lat.toFixed(4)}, ${lng.toFixed(4)} z${z.toFixed(1)}`;
+  }
+  map.on('move', updateCoords);
+
+  // --- Spot count ---
+  function updateSpotCount() {
+    const n = spots.length;
+    document.getElementById('pin-count').textContent = `${n} spot${n !== 1 ? 's' : ''}`;
+  }
+
+  // --- Create spot marker on map ---
+  function addSpotMarker(spot) {
+    const el = document.createElement('div');
+    el.className = 'pin-dot';
+    el.style.backgroundColor = '#a855f7';
+
+    const marker = new mapboxgl.Marker({ element: el })
+      .setLngLat([spot.Lng, spot.Lat])
+      .addTo(map);
+
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      showSpotPopup(spot);
+    });
+
+    spotMarkers[spot.id] = marker;
+  }
+
+  // --- Show popup for existing spot ---
+  function showSpotPopup(spot) {
+    closePopup();
+    const desc = spot.Description
+      ? `<p class="pin-note">${escapeHtml(spot.Description)}</p>`
+      : `<p class="pin-note pin-note-empty">No description</p>`;
+
+    const html = `
+      <div class="popup-form">
+        <p class="pin-name">${escapeHtml(spot.Name)}</p>
+        ${desc}
+        <div class="popup-actions">
+          <button class="btn-delete" onclick="deleteSpot(${spot.id})">Delete</button>
+        </div>
+      </div>`;
+
+    activePopup = new mapboxgl.Popup({ closeOnClick: false, offset: 12 })
+      .setLngLat([spot.Lng, spot.Lat])
+      .setHTML(html)
+      .addTo(map);
+  }
+
+  // --- Show popup for new spot ---
+  function showNewSpotPopup(lng, lat) {
+    closePopup();
+
+    const html = `
+      <div class="popup-form">
+        <input type="text" id="popup-name" placeholder="Restaurant name *" autofocus />
+        <textarea id="popup-desc" rows="2" placeholder="Description (optional)"></textarea>
+        <div class="popup-actions">
+          <button class="btn-cancel" onclick="closePopup()">Cancel</button>
+          <button class="btn-save" onclick="saveNewSpot(${lng}, ${lat})">Save</button>
+        </div>
+      </div>`;
+
+    activePopup = new mapboxgl.Popup({ closeOnClick: false, offset: 12 })
+      .setLngLat([lng, lat])
+      .setHTML(html)
+      .addTo(map);
+
+    setTimeout(() => {
+      const input = document.getElementById('popup-name');
+      if (input) input.focus();
+    }, 50);
+  }
+
+  function closePopup() {
+    if (activePopup) {
+      activePopup.remove();
+      activePopup = null;
+    }
+  }
+
+  async function saveNewSpot(lng, lat) {
+    const nameInput = document.getElementById('popup-name');
+    const descInput = document.getElementById('popup-desc');
+    const name = nameInput ? nameInput.value.trim() : '';
+    const description = descInput ? descInput.value.trim() : '';
+
+    if (!name) {
+      nameInput.style.borderColor = '#ec4899';
+      nameInput.focus();
+      return;
+    }
+
+    const spot = await saveSpot(name, description || null, lat, lng);
+    if (spot) {
+      spots.unshift(spot);
+      addSpotMarker(spot);
+      updateSpotCount();
+      closePopup();
+    }
+  }
+
+  async function deleteSpot(id) {
+    const success = await removeSpot(id);
+    if (success) {
+      spots = spots.filter(s => s.id !== id);
+      if (spotMarkers[id]) {
+        spotMarkers[id].remove();
+        delete spotMarkers[id];
+      }
+      updateSpotCount();
+      closePopup();
+    }
+  }
+
+  // --- Map click ---
+  map.on('click', (e) => {
+    if (activePopup) {
+      closePopup();
+      return;
+    }
+    showNewSpotPopup(e.lngLat.lng, e.lngLat.lat);
+  });
+
+  // --- Go to ---
+  function handleGoto() {
+    const lng = parseFloat(document.getElementById('goto-lng').value);
+    const lat = parseFloat(document.getElementById('goto-lat').value);
+    const zoom = parseFloat(document.getElementById('goto-zoom').value) || 12;
+    if (isNaN(lng) || isNaN(lat)) return;
+    map.flyTo({ center: [lng, lat], zoom, duration: 1500 });
+  }
+
+  // --- My location ---
+  function handleMyLocation() {
+    navigator.geolocation.getCurrentPosition((pos) => {
+      const { longitude, latitude } = pos.coords;
+      setUserMarker(longitude, latitude);
+      map.flyTo({ center: [longitude, latitude], zoom: 14, duration: 1500 });
+    });
+  }
+
+  function setUserMarker(lng, lat) {
+    if (userMarker) userMarker.remove();
+    const el = document.createElement('div');
+    el.className = 'user-marker';
+    el.innerHTML = '<div class="pulse"></div><div class="dot"></div>';
+    userMarker = new mapboxgl.Marker({ element: el })
+      .setLngLat([lng, lat])
+      .addTo(map);
+  }
+
+  // --- Style change ---
+  function handleStyleChange() {
+    map.setStyle(document.getElementById('style-picker').value);
+  }
+
+  // Re-add markers after style change (Mapbox removes them)
+  map.on('style.load', () => {
+    // Markers are DOM elements, they survive style changes in mapbox-gl v3
+  });
+
+  // --- Escape HTML ---
+  function escapeHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  // --- Init ---
+  async function init() {
+    spots = await loadSpots();
+    spots.forEach(addSpotMarker);
+    updateSpotCount();
+  }
+
+  init();
+
+  // Geolocate on load - try to get user's location, otherwise stay at London default
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { longitude, latitude } = pos.coords;
+        setUserMarker(longitude, latitude);
+        map.flyTo({ center: [longitude, latitude], zoom: 14, duration: 1500 });
+      },
+      (err) => {
+        console.log('Geolocation unavailable, using London default:', err.message);
+        // Already centered on London, no action needed
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+  }
+</script>
+</body>
+</html>
