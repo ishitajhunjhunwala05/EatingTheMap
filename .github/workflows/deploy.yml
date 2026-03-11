@@ -27,6 +27,16 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
+      - name: Create config.js from secrets
+        run: |
+          cat > config.js << EOF
+          const MAPBOX_TOKEN = '${{ secrets.MAPBOX_TOKEN }}';
+          
+          // Supabase config
+          const SUPABASE_URL = '${{ secrets.SUPABASE_URL }}';
+          const SUPABASE_ANON_KEY = '${{ secrets.SUPABASE_ANON_KEY }}';
+          EOF
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
