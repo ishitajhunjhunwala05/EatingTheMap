@@ -27,13 +27,20 @@
       background: #000;
     }
 
-    #map {
-      position: fixed;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      filter: saturate(1.1) brightness(1.02);
+    body {
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
     }
+
+    #map {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  height: -webkit-fill-available;
+  filter: saturate(1.1) brightness(1.02);
+     }
 
     #border-img {
   position: fixed;
@@ -545,7 +552,6 @@ document.addEventListener('input', function(e) {
   }
 </script>
 
-<div class="toast" id="toast"></div>
 
 </body>
 </html>
