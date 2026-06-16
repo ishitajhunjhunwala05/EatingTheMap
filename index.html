@@ -340,11 +340,14 @@ document.addEventListener('input', function(e) {
     overlay.classList.remove('hide');
     overlay.style.display = 'flex';
   }
-  function dismissModal() {
-    const overlay = document.getElementById('modal-overlay');
-    overlay.classList.add('hide');
-    setTimeout(() => { overlay.style.display = 'none'; overlay.classList.remove('hide'); }, 300);
-  }
+ function dismissModal() {
+  const overlay = document.getElementById('modal-overlay');
+  overlay.classList.add('hide');
+  setTimeout(function() { 
+    overlay.style.display = 'none'; 
+    overlay.classList.remove('hide'); 
+  }, 300);
+}
 
   // --- Toast ---
   function showToast(msg) {
