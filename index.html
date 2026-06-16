@@ -60,10 +60,10 @@
 
     #about-btn {
   position: fixed;
-  bottom: 24px;
-  left: 24px;
+  bottom: 50px;
+  left: 50px;
   z-index: 100;
-  width: 120px;
+  width: 100px;
   cursor: pointer;
   transition: transform 0.2s ease;
   border: none;
@@ -222,7 +222,6 @@
   width: 36px;
   height: 56px;
   cursor: pointer;
-  mix-blend-mode: screen;
   transition: transform 0.15s ease;
 }
 .utensil-marker:hover { transform: scale(1.2) translateY(-3px); }
@@ -309,13 +308,13 @@
  function utensilPickerHTML() {
   return '<div class="utensil-picker" id="utensil-picker">'
     + '<div class="utensil-option selected" data-type="spoon" onclick="selectUtensil(\'spoon\')">'
-    + '<img src="spoon.PNG" style="width:24px;height:38px;mix-blend-mode:screen;" />'
+    + '<img src="spoon.PNG" style="width:24px;height:38px;" />'
     + '<span>SPOON</span></div>'
     + '<div class="utensil-option" data-type="fork" onclick="selectUtensil(\'fork\')">'
-    + '<img src="fork.PNG" style="width:24px;height:38px;mix-blend-mode:screen;" />'
+    + '<img src="fork.PNG" style="width:24px;height:38px;" />'
     + '<span>FORK</span></div>'
     + '<div class="utensil-option" data-type="knife" onclick="selectUtensil(\'knife\')">'
-    + '<img src="knife.PNG" style="width:24px;height:38px;mix-blend-mode:screen;" />'
+    + '<img src="knife.PNG" style="width:24px;height:38px;" />'
     + '<span>KNIFE</span></div>'
     + '</div>';
 }
