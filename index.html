@@ -477,17 +477,18 @@ document.addEventListener('input', function(e) {
     const description = descInput ? descInput.value.trim() : '';
 
     if (!description) {
-  if (descInput) {
-    descInput.style.borderColor = '#dc2626';
-    descInput.focus();
-  }
-  return;
-}
+      if (descInput) {
+        descInput.style.borderColor = '#dc2626';
+        descInput.focus();
+      }
+      return;
+    }
 
     const spot = await saveSpot(name || null, description, lat, lng, selectedUtensil);
     closePopup();
     if (spot) {
-      showToast('Submitted — your memory is pending approval.');
+      spots.unshift(spot);
+      addSpotMarker(spot);
     } else {
       showToast('Something went wrong. Please try again.');
     }
@@ -536,5 +537,8 @@ document.addEventListener('input', function(e) {
     );
   }
 </script>
+
+<div class="toast" id="toast"></div>
+
 </body>
 </html>
