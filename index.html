@@ -545,16 +545,29 @@ window.addEventListener('resize', fixMapHeight);
     spots.forEach(addSpotMarker);
   }
   init();
-
+  
+function ipFallback() {
+  fetch('https://ipapi.co/json/')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      map.flyTo({ center: [data.longitude, data.latitude], zoom: 10, duration: 1500 });
+    })
+    .catch(function() {});
+}
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       function(pos) {
         setUserMarker(pos.coords.longitude, pos.coords.latitude);
         map.flyTo({ center: [pos.coords.longitude, pos.coords.latitude], zoom: 14, duration: 1500 });
       },
-      function(err) { console.log('Geolocation unavailable:', err.message); },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+      function(err) { 
+  console.log('Geolocation unavailable:', err.message);
+  ipFallback();
+},
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
+  } else {
+    ipFallback();
   }
 </script>
 
