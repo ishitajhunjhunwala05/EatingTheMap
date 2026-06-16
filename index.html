@@ -315,8 +315,7 @@
   </div>
 </div>
 
-<!-- Toast -->
-<div class="toast" id="toast">⏳ Submitted — pending approval.</div>
+
 
 <script>
   const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -485,13 +484,13 @@ document.addEventListener('input', function(e) {
 }
 
     const spot = await saveSpot(name || null, description, lat, lng, selectedUtensil);
-    closePopup();
-    if (spot) {
-      showToast('Submitted — your memory is pending approval.');
-    } else {
-      showToast('Something went wrong. Please try again.');
-    }
-  }
+closePopup();
+if (spot) {
+  spots.unshift(spot);
+  addSpotMarker(spot);
+} else {
+  showToast('Something went wrong. Please try again.');
+}
 
   map.on('click', function(e) {
     if (activePopup) { closePopup(); return; }
