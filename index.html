@@ -4,8 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Eating the Map</title>
-  <meta name="description" content="Share your favorite restaurants on the map" />
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://use.typekit.net/bpz5qbq.css">
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.9.4/mapbox-gl.css" rel="stylesheet" />
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.9.4/mapbox-gl.js"></script>
@@ -13,459 +11,366 @@
   <script src="config.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-/* Modal overlay */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(127, 29, 29, 0.4);
-  backdrop-filter: blur(4px);
-  z-index: 99999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: fadeIn 0.3s ease;
-}
-.modal-overlay.hide {
-  animation: fadeOut 0.3s ease forwards;
-}
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
 
-.modal {
-  background: #fff;
-  border: 2px solid #fecaca;
-  border-radius: 20px;
-  padding: 32px;
-  max-width: 420px;
-  width: 90%;
-  box-shadow: 0 8px 40px rgba(220, 38, 38, 0.2);
-  font-family: 'Nunito', sans-serif;
-  text-align: center;
-  animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-@keyframes slideUp {
-  from { transform: translateY(30px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-.modal h2 {
-  font-family: 'adobe-caslon-pro', serif;
-  font-size: 26px;
-  color: #dc2626;
-  margin-bottom: 12px;
-}
-
-.modal p {
-  font-size: 14px;
-  color: #7f1d1d;
-  line-height: 1.7;
-  margin-bottom: 24px;
-}
-
-.modal .modal-tip {
-  background: #fee2e2;
-  border-radius: 10px;
-  padding: 10px 14px;
-  font-size: 13px;
-  color: #991b1b;
-  margin-bottom: 24px;
-}
-
-.modal .btn-dismiss {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  color: #fff;
-  border: none;
-  border-radius: 10px;
-  padding: 10px 28px;
-  font-size: 14px;
-  font-family: 'Nunito', sans-serif;
-  font-weight: 700;
-  cursor: pointer;
-}
-.modal .btn-dismiss:hover {
-  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-}
     body {
-      font-family: 'Nunito', Arial, Helvetica, sans-serif;
+      font-family: 'adobe-caslon-pro', serif;
       display: flex;
       flex-direction: column;
       height: 100vh;
       width: 100vw;
       overflow: hidden;
-      background: #fff5f5;
-      color: #7f1d1d;
+      background: #000;
     }
-
-    nav {
-      z-index: 10;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 12px;
-      border-bottom: 2px solid #fecaca;
-      background: linear-gradient(135deg, #fff5f5 0%, #fee2e2 100%);
-      padding: 8px 16px;
-      font-size: 13px;
-      box-shadow: 0 2px 8px rgba(220, 38, 38, 0.1);
-    }
-
-    nav .brand {
-  margin-right: 8px;
-  font-family: 'adobe-caslon-pro', serif;
-  font-size: 16px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  color: #dc2626;
-}
-
-    nav .divider {
-      width: 1px;
-      height: 20px;
-      background: #fca5a5;
-    }
-
-    nav .coords {
-      font-family: 'Nunito', monospace;
-      font-size: 11px;
-      color: #ef4444;
-    }
-
-    nav input[type="text"] {
-      width: 80px;
-      border-radius: 8px;
-      border: 1px solid #fecaca;
-      background: #fff;
-      padding: 4px 8px;
-      font-family: 'Nunito', sans-serif;
-      font-size: 11px;
-      outline: none;
-    }
-    nav input[type="text"].zoom-input { width: 56px; }
-    nav input[type="text"]:focus { box-shadow: 0 0 0 2px #fca5a5; border-color: #ef4444; }
-
-    nav button {
-      border: none;
-      cursor: pointer;
-      font-size: 11px;
-      border-radius: 8px;
-      font-family: 'Nunito', sans-serif;
-      font-weight: 600;
-    }
-
-    nav .btn-go {
-      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-      color: #fff;
-      padding: 5px 12px;
-      font-weight: 600;
-    }
-    nav .btn-go:hover { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); }
-
-    nav .btn-loc {
-      background: #fff;
-      border: 1px solid #fca5a5;
-      color: #dc2626;
-      padding: 5px 10px;
-    }
-    nav .btn-loc:hover { background: #fee2e2; }
-
-    nav select {
-      border-radius: 8px;
-      border: 1px solid #fecaca;
-      background: #fff;
-      padding: 4px 8px;
-      font-size: 11px;
-      font-family: 'Nunito', sans-serif;
-      outline: none;
-      color: #b91c1c;
-    }
-    nav select:focus { box-shadow: 0 0 0 2px #fca5a5; border-color: #ef4444; }
-
-    nav .pin-count {
-      margin-left: auto;
-      font-family: 'Nunito', sans-serif;
-      font-size: 12px;
-      font-weight: 600;
-      color: #ef4444;
-      background: #fee2e2;
-      padding: 3px 10px;
-      border-radius: 12px;
-    }
-
-    nav .goto-group { display: flex; align-items: center; gap: 6px; }
 
     #map {
-      flex: 1;
+      position: fixed;
+      inset: 0;
       width: 100%;
+      height: 100%;
       filter: saturate(1.1) brightness(1.02);
     }
 
-    /* User location pulse */
-    .user-marker {
-      position: relative;
+    #border-img {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  pointer-events: none;
+  z-index: 50;
+  
+}
+
+    #title-overlay {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+    }
+
+     #foil-title {
+  width: min(600px, 90vw);
+  mix-blend-mode: screen;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4));
+}
+
+    #about-btn {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  z-index: 100;
+  width: 120px;
+  cursor: pointer;
+  mix-blend-mode: screen;
+  transition: transform 0.2s ease;
+  border: none;
+  background: none;
+  padding: 0;
+}
+#about-btn:hover { transform: scale(1.05); }
+#about-btn img { width: 100%; display: block; }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(6px);
+      z-index: 99999;
       display: flex;
       align-items: center;
       justify-content: center;
+      animation: fadeIn 0.4s ease;
     }
-    .user-marker .pulse {
+    .modal-overlay.hide { animation: fadeOut 0.3s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+    .modal {
+      position: relative;
+      max-width: 500px;
+      width: 88%;
+      animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes slideUp {
+      from { transform: translateY(40px) rotate(-1deg); opacity: 0; }
+      to { transform: translateY(0) rotate(-1.5deg); opacity: 1; }
+    }
+
+    .modal img.napkin {
+      width: 100%;
+      border-radius: 4px;
+      transform: rotate(-1.5deg);
+      filter: drop-shadow(0 8px 40px rgba(0,0,0,0.7));
+    }
+
+    .modal .btn-dismiss {
       position: absolute;
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: #fca5a5;
-      opacity: 0.4;
-      animation: ping 1.5s cubic-bezier(0,0,0.2,1) infinite;
-    }
-    .user-marker .dot {
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
+      bottom: 28px;
+      right: 44px;
       background: #dc2626;
-      border: 2px solid #fff;
-      box-shadow: 0 2px 6px rgba(220, 38, 38, 0.4);
-    }
-    @keyframes ping {
-      75%, 100% { transform: scale(2); opacity: 0; }
-    }
-
-    /* Google Maps-style teardrop pin marker */
-    .pin-marker {
-      width: 28px;
-      height: 36px;
+      color: #fff;
+      border: none;
+      border-radius: 20px;
+      padding: 8px 22px;
+      font-family: 'adobe-caslon-pro', serif;
+      font-size: 14px;
       cursor: pointer;
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
-      transition: transform 0.15s ease;
+      letter-spacing: 0.03em;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+      transition: background 0.2s;
     }
-    .pin-marker:hover {
-      transform: scale(1.15) translateY(-2px);
-    }
+    .modal .btn-dismiss:hover { background: #b91c1c; }
 
-    /* Popup overrides */
     .mapboxgl-popup-content {
-      border-radius: 12px;
-      padding: 14px;
+      border-radius: 14px;
+      padding: 16px;
       font-size: 13px;
-      font-family: 'Nunito', sans-serif;
-      box-shadow: 0 4px 20px rgba(220, 38, 38, 0.2);
+      font-family: 'adobe-caslon-pro', serif;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.2);
       border: 1px solid #fecaca;
+      background: #fff;
+      min-width: 240px;
     }
 
-    .popup-form { display: flex; flex-direction: column; gap: 8px; }
+    .popup-form { display: flex; flex-direction: column; gap: 10px; }
+
     .popup-form input[type="text"],
     .popup-form textarea {
-      width: 220px;
+      width: 100%;
       resize: none;
       border-radius: 8px;
       border: 1px solid #fecaca;
-      padding: 8px;
+      padding: 8px 10px;
       font-size: 13px;
-      font-family: inherit;
+      font-family: 'adobe-caslon-pro', serif;
       outline: none;
+      background: #fff5f5;
     }
     .popup-form input[type="text"]:focus,
-    .popup-form textarea:focus { box-shadow: 0 0 0 2px #fca5a5; border-color: #ef4444; }
+    .popup-form textarea:focus {
+      box-shadow: 0 0 0 2px #fca5a5;
+      border-color: #ef4444;
+    }
 
-    .pin-name { font-weight: 700; color: #b91c1c; margin-bottom: 4px; }
+    .popup-label {
+      font-size: 11px;
+      color: #991b1b;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
 
-    .popup-actions { display: flex; justify-content: flex-end; gap: 6px; }
+    .utensil-picker {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+    .utensil-option {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 2px solid #fecaca;
+      background: #fff5f5;
+      transition: all 0.15s;
+      flex: 1;
+    }
+    .utensil-option:hover { border-color: #f87171; background: #fee2e2; }
+    .utensil-option.selected { border-color: #dc2626; background: #fee2e2; }
+    .utensil-option svg { width: 24px; height: 38px; }
+    .utensil-option span { font-size: 9px; color: #991b1b; font-weight: 700; letter-spacing: 0.06em; }
+
+    .popup-actions { display: flex; justify-content: flex-end; gap: 6px; margin-top: 2px; }
     .popup-actions button {
       border: none;
       border-radius: 8px;
-      padding: 5px 10px;
-      font-size: 11px;
-      font-family: 'Nunito', sans-serif;
+      padding: 6px 14px;
+      font-size: 12px;
+      font-family: 'adobe-caslon-pro', serif;
       font-weight: 600;
       cursor: pointer;
     }
-    .popup-actions .btn-cancel { background: transparent; color: #ef4444; }
-    .popup-actions .btn-cancel:hover { background: #fee2e2; }
-    .popup-actions .btn-save { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #fff; }
-    .popup-actions .btn-save:hover { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); }
+    .btn-cancel { background: transparent; color: #ef4444; }
+    .btn-cancel:hover { background: #fee2e2; }
+    .btn-save { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #fff; }
+    .btn-save:hover { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); }
 
-    .pin-note {
-      max-width: 192px;
-      white-space: pre-wrap;
-      color: #991b1b;
-      font-size: 13px;
-    }
-    .pin-note-empty {
-      font-style: italic;
-      color: #fca5a5;
-    }
+    .pin-name { font-weight: 700; color: #b91c1c; font-size: 15px; margin-bottom: 2px; }
+    .pin-note { max-width: 200px; white-space: pre-wrap; color: #7f1d1d; font-size: 13px; line-height: 1.5; }
+    .pin-note-empty { font-style: italic; color: #fca5a5; }
 
-    /* Pending approval toast */
+    .user-marker { position: relative; display: flex; align-items: center; justify-content: center; }
+    .user-marker .pulse {
+      position: absolute; width: 24px; height: 24px;
+      border-radius: 50%; background: #fca5a5; opacity: 0.4;
+      animation: ping 1.5s cubic-bezier(0,0,0.2,1) infinite;
+    }
+    .user-marker .dot {
+      width: 14px; height: 14px; border-radius: 50%;
+      background: #dc2626; border: 2px solid #fff;
+      box-shadow: 0 2px 6px rgba(220,38,38,0.4);
+    }
+    @keyframes ping { 75%, 100% { transform: scale(2); opacity: 0; } }
+
+    .utensil-marker {
+  width: 36px;
+  height: 56px;
+  cursor: pointer;
+  mix-blend-mode: screen;
+  transition: transform 0.15s ease;
+}
+.utensil-marker:hover { transform: scale(1.2) translateY(-3px); }
+
     .toast {
       position: fixed;
-      bottom: 24px;
-      left: 50%;
+      bottom: 32px; left: 50%;
       transform: translateX(-50%) translateY(80px);
-      background: #7f1d1d;
-      color: #fff;
-      padding: 12px 22px;
-      border-radius: 24px;
-      font-size: 13px;
-      font-weight: 600;
-      font-family: 'Nunito', sans-serif;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      background: #7f1d1d; color: #fff;
+      padding: 12px 24px; border-radius: 24px;
+      font-size: 13px; font-family: 'adobe-caslon-pro', serif;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
       z-index: 9999;
       transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
       pointer-events: none;
-      display: flex;
-      align-items: center;
-      gap: 8px;
     }
-    .toast.show {
-      transform: translateX(-50%) translateY(0);
-    }
-    .toast-icon { font-size: 16px; }
+    .toast.show { transform: translateX(-50%) translateY(0); }
   </style>
 </head>
 <body>
-<div class="modal-overlay" id="modal-overlay">
-  <div class="modal">
-    <h2>🍽 Eating the Map</h2>
-    <p>Restaurants close. Neighbourhoods change. Borders move. But the taste of your mother's cooking, the street food you ate on your first night in a new city, the last meal you shared with your best friend — dont change</p>
-    <p>This is an archive of food memories, not reviews. This is an archive of meals that shaped our collective culture.</p>
-    <div class="modal-tip">Drop a pin anywhere. Your nan's kitchen counts. So does a street corner in a city you no longer live in, a restaurant that no longer exists, or a friend's house that felt more like home than anywhere else.</div>
-    <p style="font-size:13px; color:#991b1b; margin-bottom:24px;">We are building a collective memory of culture one dish at a time.</p>
-    <button class="btn-dismiss" onclick="dismissModal()">Add your memory</button>
-  </div>
-</div>
-</div>
-<nav>
-  <span class="brand">🍽 Eating The Map</span>
-  <span class="divider"></span>
-  <span class="coords" id="coords">0.0000, 0.0000 z12.0</span>
-  <span class="divider"></span>
-
-  <div class="goto-group">
-    <input type="text" id="goto-lng" placeholder="lng" />
-    <input type="text" id="goto-lat" placeholder="lat" />
-    <input type="text" id="goto-zoom" class="zoom-input" placeholder="zoom" value="12" />
-    <button class="btn-go" onclick="handleGoto()">Go</button>
-  </div>
-
-  <button class="btn-loc" onclick="handleMyLocation()">My Location</button>
-  <span class="divider"></span>
-
-  <select id="style-picker" onchange="handleStyleChange()">
-    <option value="mapbox://styles/mapbox/streets-v12">Streets</option>
-    <option value="mapbox://styles/mapbox/satellite-streets-v12">Satellite</option>
-    <option value="mapbox://styles/mapbox/dark-v11">Dark</option>
-    <option value="mapbox://styles/mapbox/light-v11">Light</option>
-    <option value="mapbox://styles/mapbox/outdoors-v12">Outdoors</option>
-  </select>
-
-  <span class="pin-count" id="pin-count">0 spots</span>
-</nav>
 
 <div id="map"></div>
 
-<!-- Pending approval toast -->
-<div class="toast" id="toast">
-  <span class="toast-icon">⏳</span>
-  <span>Submitted! Your spot is pending approval.</span>
+<!-- sauce border -->
+<img id="border-img" src="IMG_3930.png" alt="" />
+
+<!-- Floating title + about -->
+<div id="title-overlay">
+  <img id="foil-title" src="ETMtitle.png" alt="eating the map" />
 </div>
 
-<script>
-  function dismissModal() {
-  const overlay = document.getElementById('modal-overlay');
-  overlay.classList.add('hide');
-  setTimeout(() => overlay.remove(), 300);
-}
+<button id="about-btn" onclick="openModal()">
+  <img src="about.png" alt="About" />
+</button>
 
+<!-- Napkin modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <img class="napkin" src="napkin.png" alt="About Eating the Map" />
+    <button class="btn-dismiss" onclick="dismissModal()">Close</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">⏳ Submitted — pending approval.</div>
+
+<script>
   const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   let spots = [];
   let spotMarkers = {};
   let activePopup = null;
   let userMarker = null;
+  let selectedUtensil = 'spoon';
+
+
+  // --- Modal ---
+  function openModal() {
+    const overlay = document.getElementById('modal-overlay');
+    overlay.classList.remove('hide');
+    overlay.style.display = 'flex';
+  }
+  function dismissModal() {
+    const overlay = document.getElementById('modal-overlay');
+    overlay.classList.add('hide');
+    setTimeout(() => { overlay.style.display = 'none'; overlay.classList.remove('hide'); }, 300);
+  }
 
   // --- Toast ---
   function showToast(msg) {
     const t = document.getElementById('toast');
-    t.querySelector('span:last-child').textContent = msg;
+    t.textContent = msg;
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 3500);
   }
 
-  // --- Supabase: load only approved spots ---
+  // --- Utensil SVGs ---
+ function getUtensilSVG(type) {
+  if (type === 'fork') return 'fork.PNG';
+  if (type === 'knife') return 'knife.PNG';
+  return 'spoon.PNG';
+}
+
+ function utensilPickerHTML() {
+  return '<div class="utensil-picker" id="utensil-picker">'
+    + '<div class="utensil-option selected" data-type="spoon" onclick="selectUtensil(\'spoon\')">'
+    + '<img src="spoon.PNG" style="width:24px;height:38px;mix-blend-mode:screen;" />'
+    + '<span>SPOON</span></div>'
+    + '<div class="utensil-option" data-type="fork" onclick="selectUtensil(\'fork\')">'
+    + '<img src="fork.PNG" style="width:24px;height:38px;mix-blend-mode:screen;" />'
+    + '<span>FORK</span></div>'
+    + '<div class="utensil-option" data-type="knife" onclick="selectUtensil(\'knife\')">'
+    + '<img src="knife.PNG" style="width:24px;height:38px;mix-blend-mode:screen;" />'
+    + '<span>KNIFE</span></div>'
+    + '</div>';
+}
+
+  function selectUtensil(type) {
+    selectedUtensil = type;
+    document.querySelectorAll('.utensil-option').forEach(function(el) {
+      el.classList.toggle('selected', el.dataset.type === type);
+    });
+  }
+
+  // --- Supabase ---
   async function loadSpots() {
     const { data, error } = await db
       .from('FoodSpots')
       .select('*')
       .eq('approved', true)
       .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error loading spots:', error);
-      return [];
-    }
+    if (error) { console.error('Error loading spots:', error); return []; }
     return data || [];
   }
 
-  // --- Supabase: insert with approved = false ---
-  async function saveSpot(name, description, lat, lng) {
+  async function saveSpot(name, description, lat, lng, utensil) {
     const { data, error } = await db
       .from('FoodSpots')
-      .insert([{ Name: name, Description: description, Lat: lat, Lng: lng, approved: false }])
+      .insert([{ Name: name, Description: description, Lat: lat, Lng: lng, approved: false, utensil: utensil }])
       .select()
       .single();
-
-    if (error) {
-      console.error('Error saving spot:', error);
-      return null;
-    }
+    if (error) { console.error('Error saving spot:', error); return null; }
     return data;
   }
 
-  // --- SVG teardrop pin (Google Maps style) ---
-  function createPinSVG(color = '#dc2626') {
-    const svg = `
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 36" width="28" height="36">
-        <path d="M14 0C6.268 0 0 6.268 0 14c0 9.333 14 22 14 22S28 23.333 28 14C28 6.268 21.732 0 14 0z"
-          fill="${color}" />
-        <circle cx="14" cy="14" r="6" fill="white" opacity="0.9"/>
-      </svg>`;
-    return 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
-  }
-
-  // --- Init map ---
+  // --- Map ---
   mapboxgl.accessToken = MAPBOX_TOKEN;
-  const DEFAULT_CENTER = [-0.1276, 51.5074];
   const map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/mapbox/streets-v12',
-    center: DEFAULT_CENTER,
+    center: [-0.1276, 51.5074],
     zoom: 13,
   });
 
-  // --- Viewport coords display ---
-  function updateCoords() {
-    const { lng, lat } = map.getCenter();
-    const z = map.getZoom();
-    document.getElementById('coords').textContent =
-      `${lat.toFixed(4)}, ${lng.toFixed(4)} z${z.toFixed(1)}`;
-  }
-  map.on('move', updateCoords);
-
-  // --- Spot count ---
-  function updateSpotCount() {
-    const n = spots.length;
-    document.getElementById('pin-count').textContent = `${n} spot${n !== 1 ? 's' : ''}`;
-  }
-
-  // --- Create teardrop pin marker ---
   function addSpotMarker(spot) {
+    const type = spot.utensil || 'spoon';
     const el = document.createElement('img');
-    el.className = 'pin-marker';
-    el.src = createPinSVG('#dc2626');
-    el.title = spot.Name;
+    el.className = 'utensil-marker';
+    el.src = getUtensilSVG(type, '#dc2626');
+    el.title = spot.Name || 'Food memory';
 
     const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
       .setLngLat([spot.Lng, spot.Lat])
       .addTo(map);
 
-    el.addEventListener('click', (e) => {
+    el.addEventListener('click', function(e) {
       e.stopPropagation();
       showSpotPopup(spot);
     });
@@ -473,55 +378,44 @@
     spotMarkers[spot.id] = marker;
   }
 
-  // --- Show popup for existing spot (no delete button) ---
   function showSpotPopup(spot) {
     closePopup();
+    const nameHTML = spot.Name ? '<p class="pin-name">' + escapeHtml(spot.Name) + '</p>' : '';
     const desc = spot.Description
-      ? `<p class="pin-note">${escapeHtml(spot.Description)}</p>`
-      : `<p class="pin-note pin-note-empty">No description</p>`;
+      ? '<p class="pin-note">' + escapeHtml(spot.Description) + '</p>'
+      : '<p class="pin-note pin-note-empty">No memory shared.</p>';
 
-    const html = `
-      <div class="popup-form">
-        <p class="pin-name">${escapeHtml(spot.Name)}</p>
-        ${desc}
-      </div>`;
-
-    activePopup = new mapboxgl.Popup({ closeOnClick: false, offset: [0, -32] })
+    activePopup = new mapboxgl.Popup({ closeOnClick: false, offset: [0, -40] })
       .setLngLat([spot.Lng, spot.Lat])
-      .setHTML(html)
+      .setHTML('<div class="popup-form">' + nameHTML + desc + '</div>')
       .addTo(map);
   }
 
-  // --- Show popup for new spot ---
   function showNewSpotPopup(lng, lat) {
     closePopup();
-
-    const html = `
-      <div class="popup-form">
-        <input type="text" id="popup-name" placeholder="Restaurant name *" autofocus />
-        <textarea id="popup-desc" rows="2" placeholder="Description (optional)"></textarea>
-        <div class="popup-actions">
-          <button class="btn-cancel" onclick="closePopup()">Cancel</button>
-          <button class="btn-save" onclick="saveNewSpot(${lng}, ${lat})">Submit</button>
-        </div>
-      </div>`;
+    const html = '<div class="popup-form">'
+      + '<div class="popup-label">Pick your utensil</div>'
+      + utensilPickerHTML()
+      + '<input type="text" id="popup-name" placeholder="Name of the place (optional)" />'
+      + '<textarea id="popup-desc" rows="3" placeholder="Your memory *"></textarea>'
+      + '<div class="popup-actions">'
+      + '<button class="btn-cancel" onclick="closePopup()">Cancel</button>'
+      + '<button class="btn-save" onclick="saveNewSpot(' + lng + ', ' + lat + ')">Submit</button>'
+      + '</div></div>';
 
     activePopup = new mapboxgl.Popup({ closeOnClick: false, offset: 12 })
       .setLngLat([lng, lat])
       .setHTML(html)
       .addTo(map);
 
-    setTimeout(() => {
-      const input = document.getElementById('popup-name');
+    setTimeout(function() {
+      const input = document.getElementById('popup-desc');
       if (input) input.focus();
     }, 50);
   }
 
   function closePopup() {
-    if (activePopup) {
-      activePopup.remove();
-      activePopup = null;
-    }
+    if (activePopup) { activePopup.remove(); activePopup = null; }
   }
 
   async function saveNewSpot(lng, lat) {
@@ -530,115 +424,63 @@
     const name = nameInput ? nameInput.value.trim() : '';
     const description = descInput ? descInput.value.trim() : '';
 
-    if (!name) {
-      nameInput.style.borderColor = '#dc2626';
-      nameInput.focus();
+    if (!description) {
+      descInput.style.borderColor = '#dc2626';
+      descInput.focus();
       return;
     }
 
-    const spot = await saveSpot(name, description || null, lat, lng);
+    const spot = await saveSpot(name || null, description, lat, lng, selectedUtensil);
     closePopup();
-
     if (spot) {
-      // Don't add to map — it needs approval first
-      showToast('Submitted! Your spot is pending approval ⏳');
+      showToast('Submitted — your memory is pending approval.');
     } else {
       showToast('Something went wrong. Please try again.');
     }
   }
 
-  // --- Map click ---
-  map.on('click', (e) => {
-    if (activePopup) {
-      closePopup();
-      return;
-    }
+  map.on('click', function(e) {
+    if (activePopup) { closePopup(); return; }
     showNewSpotPopup(e.lngLat.lng, e.lngLat.lat);
   });
 
-  // --- Go to ---
-  function handleGoto() {
-    const lng = parseFloat(document.getElementById('goto-lng').value);
-    const lat = parseFloat(document.getElementById('goto-lat').value);
-    const zoom = parseFloat(document.getElementById('goto-zoom').value) || 12;
-    if (isNaN(lng) || isNaN(lat)) return;
-    map.flyTo({ center: [lng, lat], zoom, duration: 1500 });
-  }
-
-  // --- My location ---
-  function handleMyLocation() {
-    navigator.geolocation.getCurrentPosition((pos) => {
-      const { longitude, latitude } = pos.coords;
-      setUserMarker(longitude, latitude);
-      map.flyTo({ center: [longitude, latitude], zoom: 14, duration: 1500 });
+  map.on('style.load', function() {
+    spots.forEach(function(spot) {
+      if (spotMarkers[spot.id]) { spotMarkers[spot.id].remove(); delete spotMarkers[spot.id]; }
+      addSpotMarker(spot);
     });
-  }
+  });
 
   function setUserMarker(lng, lat) {
     if (userMarker) userMarker.remove();
     const el = document.createElement('div');
     el.className = 'user-marker';
     el.innerHTML = '<div class="pulse"></div><div class="dot"></div>';
-    userMarker = new mapboxgl.Marker({ element: el })
-      .setLngLat([lng, lat])
-      .addTo(map);
+    userMarker = new mapboxgl.Marker({ element: el }).setLngLat([lng, lat]).addTo(map);
   }
 
-  // test comment
-
-
-  // --- Style change ---
-  function handleStyleChange() {
-    map.setStyle(document.getElementById('style-picker').value);
-  }
-
-  // Re-add markers after style change
-  map.on('style.load', () => {
-    spots.forEach(spot => {
-      if (spotMarkers[spot.id]) {
-        spotMarkers[spot.id].remove();
-        delete spotMarkers[spot.id];
-      }
-      addSpotMarker(spot);
-    });
-  });
-
-  // --- Escape HTML ---
   function escapeHtml(str) {
     const d = document.createElement('div');
     d.textContent = str;
     return d.innerHTML;
   }
 
-  // --- Init ---
   async function init() {
     spots = await loadSpots();
     spots.forEach(addSpotMarker);
-    updateSpotCount();
   }
-
   init();
 
-  // Geolocate on load
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { longitude, latitude } = pos.coords;
-        setUserMarker(longitude, latitude);
-        map.flyTo({ center: [longitude, latitude], zoom: 14, duration: 1500 });
+      function(pos) {
+        setUserMarker(pos.coords.longitude, pos.coords.latitude);
+        map.flyTo({ center: [pos.coords.longitude, pos.coords.latitude], zoom: 14, duration: 1500 });
       },
-      (err) => {
-        console.log('Geolocation unavailable, using London default:', err.message);
-      },
+      function(err) { console.log('Geolocation unavailable:', err.message); },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
     );
   }
-
-  db.from('FoodSpots').select('*').then(({data, error}) => {
-  console.log('RAW data:', data);
-  console.log('RAW error:', error);
-});
-
 </script>
 </body>
 </html>

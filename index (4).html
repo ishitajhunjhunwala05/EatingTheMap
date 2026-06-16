@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eating the Map</title>
+  <link rel="stylesheet" href="https://use.typekit.net/bpz5qbq.css">
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.9.4/mapbox-gl.css" rel="stylesheet" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.9.4/mapbox-gl.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'adobe-caslon-pro', serif;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      background: #000;
+    }
+
+    #map {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      filter: saturate(1.1) brightness(1.02);
+    }
+
+    #border-img {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  pointer-events: none;
+  z-index: 50;
+  
+}
+
+    #title-overlay {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+    }
+
+     #foil-title {
+  width: min(600px, 90vw);
+  mix-blend-mode: screen;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4));
+}
+
+    #about-btn {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  z-index: 100;
+  width: 120px;
+  cursor: pointer;
+  mix-blend-mode: screen;
+  transition: transform 0.2s ease;
+  border: none;
+  background: none;
+  padding: 0;
+}
+#about-btn:hover { transform: scale(1.05); }
+#about-btn img { width: 100%; display: block; }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(6px);
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.4s ease;
+    }
+    .modal-overlay.hide { animation: fadeOut 0.3s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+    .modal {
+      position: relative;
+      max-width: 500px;
+      width: 88%;
+      animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes slideUp {
+      from { transform: translateY(40px) rotate(-1deg); opacity: 0; }
+      to { transform: translateY(0) rotate(-1.5deg); opacity: 1; }
+    }
+
+    .modal img.napkin {
+      width: 100%;
+      border-radius: 4px;
+      transform: rotate(-1.5deg);
+      filter: drop-shadow(0 8px 40px rgba(0,0,0,0.7));
+    }
+
+    .modal .btn-dismiss {
+      position: absolute;
+      bottom: 28px;
+      right: 44px;
+      background: #dc2626;
+      color: #fff;
+      border: none;
+      border-radius: 20px;
+      padding: 8px 22px;
+      font-family: 'adobe-caslon-pro', serif;
+      font-size: 14px;
+      cursor: pointer;
+      letter-spacing: 0.03em;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+      transition: background 0.2s;
+    }
+    .modal .btn-dismiss:hover { background: #b91c1c; }
+
+    .mapboxgl-popup-content {
+      border-radius: 14px;
+      padding: 16px;
+      font-size: 13px;
+      font-family: 'adobe-caslon-pro', serif;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+      border: 1px solid #fecaca;
+      background: #fff;
+      min-width: 240px;
+    }
+
+    .popup-form { display: flex; flex-direction: column; gap: 10px; }
+
+    .popup-form input[type="text"],
+    .popup-form textarea {
+      width: 100%;
+      resize: none;
+      border-radius: 8px;
+      border: 1px solid #fecaca;
+      padding: 8px 10px;
+      font-size: 13px;
+      font-family: 'adobe-caslon-pro', serif;
+      outline: none;
+      background: #fff5f5;
+    }
+    .popup-form input[type="text"]:focus,
+    .popup-form textarea:focus {
+      box-shadow: 0 0 0 2px #fca5a5;
+      border-color: #ef4444;
+    }
+
+    .popup-label {
+      font-size: 11px;
+      color: #991b1b;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .utensil-picker {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+    .utensil-option {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 2px solid #fecaca;
+      background: #fff5f5;
+      transition: all 0.15s;
+      flex: 1;
+    }
+    .utensil-option:hover { border-color: #f87171; background: #fee2e2; }
+    .utensil-option.selected { border-color: #dc2626; background: #fee2e2; }
+    .utensil-option svg { width: 24px; height: 38px; }
+    .utensil-option span { font-size: 9px; color: #991b1b; font-weight: 700; letter-spacing: 0.06em; }
+
+    .popup-actions { display: flex; justify-content: flex-end; gap: 6px; margin-top: 2px; }
+    .popup-actions button {
+      border: none;
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-size: 12px;
+      font-family: 'adobe-caslon-pro', serif;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-cancel { background: transparent; color: #ef4444; }
+    .btn-cancel:hover { background: #fee2e2; }
+    .btn-save { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #fff; }
+    .btn-save:hover { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); }
+
+    .pin-name { font-weight: 700; color: #b91c1c; font-size: 15px; margin-bottom: 2px; }
+    .pin-note { max-width: 200px; white-space: pre-wrap; color: #7f1d1d; font-size: 13px; line-height: 1.5; }
+    .pin-note-empty { font-style: italic; color: #fca5a5; }
+
+    .user-marker { position: relative; display: flex; align-items: center; justify-content: center; }
+    .user-marker .pulse {
+      position: absolute; width: 24px; height: 24px;
+      border-radius: 50%; background: #fca5a5; opacity: 0.4;
+      animation: ping 1.5s cubic-bezier(0,0,0.2,1) infinite;
+    }
+    .user-marker .dot {
+      width: 14px; height: 14px; border-radius: 50%;
+      background: #dc2626; border: 2px solid #fff;
+      box-shadow: 0 2px 6px rgba(220,38,38,0.4);
+    }
+    @keyframes ping { 75%, 100% { transform: scale(2); opacity: 0; } }
+
+    .utensil-marker {
+  width: 36px;
+  height: 56px;
+  cursor: pointer;
+  mix-blend-mode: screen;
+  transition: transform 0.15s ease;
+}
+.utensil-marker:hover { transform: scale(1.2) translateY(-3px); }
+
+    .toast {
+      position: fixed;
+      bottom: 32px; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #7f1d1d; color: #fff;
+      padding: 12px 24px; border-radius: 24px;
+      font-size: 13px; font-family: 'adobe-caslon-pro', serif;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      z-index: 9999;
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      pointer-events: none;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<!-- sauce border -->
+<img id="border-img" src="IMG_3930.png" alt="" />
+
+<!-- Floating title + about -->
+<div id="title-overlay">
+  <img id="foil-title" src="ETMtitle.png" alt="eating the map" />
+</div>
+
+<button id="about-btn" onclick="openModal()">
+  <img src="about.png" alt="About" />
+</button>
+
+<!-- Napkin modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <img class="napkin" src="napkin.png" alt="About Eating the Map" />
+    <button class="btn-dismiss" onclick="dismissModal()">Close</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">⏳ Submitted — pending approval.</div>
+
+<script>
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let spots = [];
+  let spotMarkers = {};
+  let activePopup = null;
+  let userMarker = null;
+  let selectedUtensil = 'spoon';
+
+
+  // --- Modal ---
+  function openModal() {
+    const overlay = document.getElementById('modal-overlay');
+    overlay.classList.remove('hide');
+    overlay.style.display = 'flex';
+  }
+  function dismissModal() {
+    const overlay = document.getElementById('modal-overlay');
+    overlay.classList.add('hide');
+    setTimeout(() => { overlay.style.display = 'none'; overlay.classList.remove('hide'); }, 300);
+  }
+
+  // --- Toast ---
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3500);
+  }
+
+  // --- Utensil SVGs ---
+ function getUtensilSVG(type) {
+  if (type === 'fork') return 'fork.PNG';
+  if (type === 'knife') return 'knife.PNG';
+  return 'spoon.PNG';
+}
+
+ function utensilPickerHTML() {
+  return '<div class="utensil-picker" id="utensil-picker">'
+    + '<div class="utensil-option selected" data-type="spoon" onclick="selectUtensil(\'spoon\')">'
+    + '<img src="spoon.PNG" style="width:24px;height:38px;mix-blend-mode:screen;" />'
+    + '<span>SPOON</span></div>'
+    + '<div class="utensil-option" data-type="fork" onclick="selectUtensil(\'fork\')">'
+    + '<img src="fork.PNG" style="width:24px;height:38px;mix-blend-mode:screen;" />'
+    + '<span>FORK</span></div>'
+    + '<div class="utensil-option" data-type="knife" onclick="selectUtensil(\'knife\')">'
+    + '<img src="knife.PNG" style="width:24px;height:38px;mix-blend-mode:screen;" />'
+    + '<span>KNIFE</span></div>'
+    + '</div>';
+}
+
+  function selectUtensil(type) {
+    selectedUtensil = type;
+    document.querySelectorAll('.utensil-option').forEach(function(el) {
+      el.classList.toggle('selected', el.dataset.type === type);
+    });
+  }
+
+  // --- Supabase ---
+  async function loadSpots() {
+    const { data, error } = await db
+      .from('FoodSpots')
+      .select('*')
+      .eq('approved', true)
+      .order('created_at', { ascending: false });
+    if (error) { console.error('Error loading spots:', error); return []; }
+    return data || [];
+  }
+
+  async function saveSpot(name, description, lat, lng, utensil) {
+    const { data, error } = await db
+      .from('FoodSpots')
+      .insert([{ Name: name, Description: description, Lat: lat, Lng: lng, approved: false, utensil: utensil }])
+      .select()
+      .single();
+    if (error) { console.error('Error saving spot:', error); return null; }
+    return data;
+  }
+
+  // --- Map ---
+  mapboxgl.accessToken = MAPBOX_TOKEN;
+  const map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/streets-v12',
+    center: [-0.1276, 51.5074],
+    zoom: 13,
+  });
+
+  function addSpotMarker(spot) {
+    const type = spot.utensil || 'spoon';
+    const el = document.createElement('img');
+    el.className = 'utensil-marker';
+    el.src = getUtensilSVG(type, '#dc2626');
+    el.title = spot.Name || 'Food memory';
+
+    const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
+      .setLngLat([spot.Lng, spot.Lat])
+      .addTo(map);
+
+    el.addEventListener('click', function(e) {
+      e.stopPropagation();
+      showSpotPopup(spot);
+    });
+
+    spotMarkers[spot.id] = marker;
+  }
+
+  function showSpotPopup(spot) {
+    closePopup();
+    const nameHTML = spot.Name ? '<p class="pin-name">' + escapeHtml(spot.Name) + '</p>' : '';
+    const desc = spot.Description
+      ? '<p class="pin-note">' + escapeHtml(spot.Description) + '</p>'
+      : '<p class="pin-note pin-note-empty">No memory shared.</p>';
+
+    activePopup = new mapboxgl.Popup({ closeOnClick: false, offset: [0, -40] })
+      .setLngLat([spot.Lng, spot.Lat])
+      .setHTML('<div class="popup-form">' + nameHTML + desc + '</div>')
+      .addTo(map);
+  }
+
+  function showNewSpotPopup(lng, lat) {
+    closePopup();
+    const html = '<div class="popup-form">'
+      + '<div class="popup-label">Pick your utensil</div>'
+      + utensilPickerHTML()
+      + '<input type="text" id="popup-name" placeholder="Name of the place (optional)" />'
+      + '<textarea id="popup-desc" rows="3" placeholder="Your memory *"></textarea>'
+      + '<div class="popup-actions">'
+      + '<button class="btn-cancel" onclick="closePopup()">Cancel</button>'
+      + '<button class="btn-save" onclick="saveNewSpot(' + lng + ', ' + lat + ')">Submit</button>'
+      + '</div></div>';
+
+    activePopup = new mapboxgl.Popup({ closeOnClick: false, offset: 12 })
+      .setLngLat([lng, lat])
+      .setHTML(html)
+      .addTo(map);
+
+    setTimeout(function() {
+      const input = document.getElementById('popup-desc');
+      if (input) input.focus();
+    }, 50);
+  }
+
+  function closePopup() {
+    if (activePopup) { activePopup.remove(); activePopup = null; }
+  }
+
+  async function saveNewSpot(lng, lat) {
+    const nameInput = document.getElementById('popup-name');
+    const descInput = document.getElementById('popup-desc');
+    const name = nameInput ? nameInput.value.trim() : '';
+    const description = descInput ? descInput.value.trim() : '';
+
+    if (!description) {
+      descInput.style.borderColor = '#dc2626';
+      descInput.focus();
+      return;
+    }
+
+    const spot = await saveSpot(name || null, description, lat, lng, selectedUtensil);
+    closePopup();
+    if (spot) {
+      showToast('Submitted — your memory is pending approval.');
+    } else {
+      showToast('Something went wrong. Please try again.');
+    }
+  }
+
+  map.on('click', function(e) {
+    if (activePopup) { closePopup(); return; }
+    showNewSpotPopup(e.lngLat.lng, e.lngLat.lat);
+  });
+
+  map.on('style.load', function() {
+    spots.forEach(function(spot) {
+      if (spotMarkers[spot.id]) { spotMarkers[spot.id].remove(); delete spotMarkers[spot.id]; }
+      addSpotMarker(spot);
+    });
+  });
+
+  function setUserMarker(lng, lat) {
+    if (userMarker) userMarker.remove();
+    const el = document.createElement('div');
+    el.className = 'user-marker';
+    el.innerHTML = '<div class="pulse"></div><div class="dot"></div>';
+    userMarker = new mapboxgl.Marker({ element: el }).setLngLat([lng, lat]).addTo(map);
+  }
+
+  function escapeHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  async function init() {
+    spots = await loadSpots();
+    spots.forEach(addSpotMarker);
+  }
+  init();
+
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      function(pos) {
+        setUserMarker(pos.coords.longitude, pos.coords.latitude);
+        map.flyTo({ center: [pos.coords.longitude, pos.coords.latitude], zoom: 14, duration: 1500 });
+      },
+      function(err) { console.log('Geolocation unavailable:', err.message); },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+  }
+</script>
+</body>
+</html>
