@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
+  
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Eating the Map</title>
@@ -11,9 +16,9 @@
   <script src="config.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
+  
     body {
-      font-family: 'adobe-caslon-pro', serif;
+      font-family: 'Patrick Hand', serif;
       display: flex;
       flex-direction: column;
       height: 100vh;
@@ -115,7 +120,7 @@
       border: none;
       border-radius: 20px;
       padding: 8px 22px;
-      font-family: 'adobe-caslon-pro', serif;
+      font-family: 'Patrick Hand', serif;
       font-size: 14px;
       cursor: pointer;
       letter-spacing: 0.03em;
@@ -124,16 +129,24 @@
     }
     .modal .btn-dismiss:hover { background: #b91c1c; }
 
-    .mapboxgl-popup-content {
-      border-radius: 14px;
-      padding: 16px;
-      font-size: 13px;
-      font-family: 'adobe-caslon-pro', serif;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.2);
-      border: 1px solid #fecaca;
-      background: #fff;
-      min-width: 240px;
-    }
+  .mapboxgl-popup-content {
+  border-radius: 14px;
+  padding: 12px;
+  font-size: 13px;
+  font-family: 'Patrick Hand', sans-serif;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+  border: 1px solid #fecaca;
+  background: #fff;
+  min-width: 220px;
+  max-width: 260px;
+}
+
+.popup-form { gap: 7px; }
+
+.popup-form textarea {
+  min-height: 32px;
+  overflow: hidden;
+}
 
     .popup-form { display: flex; flex-direction: column; gap: 10px; }
 
@@ -145,7 +158,7 @@
       border: 1px solid #fecaca;
       padding: 8px 10px;
       font-size: 13px;
-      font-family: 'adobe-caslon-pro', serif;
+      font-family: 'Patrick Hand', serif;
       outline: none;
       background: #fff5f5;
     }
@@ -168,23 +181,50 @@
       gap: 8px;
       justify-content: center;
     }
-    .utensil-option {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 5px;
-      cursor: pointer;
-      padding: 8px 10px;
-      border-radius: 10px;
-      border: 2px solid #fecaca;
-      background: #fff5f5;
-      transition: all 0.15s;
-      flex: 1;
-    }
-    .utensil-option:hover { border-color: #f87171; background: #fee2e2; }
-    .utensil-option.selected { border-color: #dc2626; background: #fee2e2; }
-    .utensil-option svg { width: 24px; height: 38px; }
-    .utensil-option span { font-size: 9px; color: #991b1b; font-weight: 700; letter-spacing: 0.06em; }
+    .utensil-picker {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  align-items: flex-end;
+  padding: 4px 0;
+}
+.utensil-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 0;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform: scale(0.85);
+  opacity: 0.5;
+}
+.utensil-option:hover {
+  transform: scale(1.0);
+  opacity: 0.75;
+}
+.utensil-option.selected {
+  transform: scale(1.2);
+  opacity: 1;
+}
+.utensil-option img {
+  width: 36px;
+  height: 58px;
+  object-fit: contain;
+}
+.utensil-option span {
+  font-size: 9px;
+  color: #991b1b;
+  font-family: 'Patrick Hand', sans-serif;
+  letter-spacing: 0.06em;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.utensil-option.selected span {
+  opacity: 1;
+}
 
     .popup-actions { display: flex; justify-content: flex-end; gap: 6px; margin-top: 2px; }
     .popup-actions button {
@@ -192,7 +232,7 @@
       border-radius: 8px;
       padding: 6px 14px;
       font-size: 12px;
-      font-family: 'adobe-caslon-pro', serif;
+      font-family: 'Patrick Hand', serif;
       font-weight: 600;
       cursor: pointer;
     }
@@ -232,7 +272,7 @@
       transform: translateX(-50%) translateY(80px);
       background: #7f1d1d; color: #fff;
       padding: 12px 24px; border-radius: 24px;
-      font-size: 13px; font-family: 'adobe-caslon-pro', serif;
+      font-size: 13px; font-family: 'Patrick Hand', serif;
       box-shadow: 0 4px 20px rgba(0,0,0,0.3);
       z-index: 9999;
       transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -277,6 +317,12 @@
   let userMarker = null;
   let selectedUtensil = 'spoon';
 
+document.addEventListener('input', function(e) {
+  if (e.target.id === 'popup-desc') {
+    e.target.style.height = 'auto';
+    e.target.style.height = e.target.scrollHeight + 'px';
+  }
+});
 
   // --- Modal ---
   function openModal() {
@@ -331,7 +377,6 @@
     const { data, error } = await db
       .from('FoodSpots')
       .select('*')
-      .eq('approved', true)
       .order('created_at', { ascending: false });
     if (error) { console.error('Error loading spots:', error); return []; }
     return data || [];
@@ -340,7 +385,7 @@
   async function saveSpot(name, description, lat, lng, utensil) {
     const { data, error } = await db
       .from('FoodSpots')
-      .insert([{ Name: name, Description: description, Lat: lat, Lng: lng, approved: false, utensil: utensil }])
+      .insert([{ Name: name, Description: description, Lat: lat, Lng: lng, utensil: utensil }])
       .select()
       .single();
     if (error) { console.error('Error saving spot:', error); return null; }
@@ -394,7 +439,7 @@
       + '<div class="popup-label">Pick your utensil</div>'
       + utensilPickerHTML()
       + '<input type="text" id="popup-name" placeholder="Name of the place (optional)" />'
-      + '<textarea id="popup-desc" rows="3" placeholder="Your memory *"></textarea>'
+      + '<textarea id="popup-desc" rows="1" placeholder="Your memory *"></textarea>'
       + '<div class="popup-actions">'
       + '<button class="btn-cancel" onclick="closePopup()">Cancel</button>'
       + '<button class="btn-save" onclick="saveNewSpot(' + lng + ', ' + lat + ')">Submit</button>'
@@ -422,10 +467,12 @@
     const description = descInput ? descInput.value.trim() : '';
 
     if (!description) {
-      descInput.style.borderColor = '#dc2626';
-      descInput.focus();
-      return;
-    }
+  if (descInput) {
+    descInput.style.borderColor = '#dc2626';
+    descInput.focus();
+  }
+  return;
+}
 
     const spot = await saveSpot(name || null, description, lat, lng, selectedUtensil);
     closePopup();
