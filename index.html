@@ -341,6 +341,12 @@ document.addEventListener('input', function(e) {
   }
 });
 
+function fixMapHeight() {
+  document.getElementById('map').style.height = window.innerHeight + 'px';
+}
+fixMapHeight();
+window.addEventListener('resize', fixMapHeight);
+
   // --- Modal ---
   function openModal() {
     const overlay = document.getElementById('modal-overlay');
