@@ -87,19 +87,21 @@
 #about-btn img { width: 100%; display: block; }
 
     .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.75);
-      backdrop-filter: blur(6px);
-      z-index: 99999;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      animation: fadeIn 0.4s ease;
-    }
-    .modal-overlay.hide { animation: fadeOut 0.3s ease forwards; }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(6px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+.modal-overlay.hide {
+  opacity: 0;
+  pointer-events: none;
+}
 
     .modal {
       position: relative;
@@ -315,8 +317,6 @@
   </div>
 </div>
 
-<!-- Toast -->
-<div class="toast" id="toast">⏳ Submitted — pending approval.</div>
 
 <script>
   const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -351,11 +351,15 @@ document.addEventListener('input', function(e) {
 
   // --- Toast ---
   function showToast(msg) {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 3500);
-  }
+  const t = document.getElementById('toast');
+  t.style.display = 'block';
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { 
+    t.classList.remove('show');
+    setTimeout(function() { t.style.display = 'none'; }, 400);
+  }, 3500);
+}
 
   // --- Utensil SVGs ---
  function getUtensilSVG(type) {
